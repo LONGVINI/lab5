@@ -55,39 +55,23 @@ public class WebSocketClient : MonoBehaviour
 
     async void Start()
     {
-        // Подключаемся к WebSocket на порту 4001
         websocket = new WebSocket("ws://localhost:4001");
 
-        websocket.OnOpen += () =>
-        {
-            Debug.Log("Соединение установлено!");
-        };
-
-        websocket.OnError += (e) =>
-        {
-            Debug.LogError("Ошибка: " + e);
-        };
-
-        websocket.OnClose += (e) =>
-        {
-            Debug.Log("Соединение закрыто!");
-        };
-
-        // Обработка полученных данных
-        websocket.OnMessage += (bytes) =>
-        {
+        websocket.OnOpen += () => {  Debug.Log("Соединение установлено!"); };
+        websocket.OnError += (e) => { Debug.LogError("Ошибка: " + e); };
+        websocket.OnClose += (e) => { Debug.Log("Соединение закрыто!");};
+        websocket.OnMessage += (bytes) => {
             var message = Encoding.UTF8.GetString(bytes);
             ProcessGpsMessage(message);
         };
 
-        // Подключаемся к серверу
         await websocket.Connect();
     }
 
     void Update()
     {
 #if !UNITY_WEBGL || UNITY_EDITOR
-        websocket?.DispatchMessageQueue();  // Обрабатываем очередь сообщений WebSocket (только для настольных платформ)
+        websocket?.DispatchMessageQueue();
 #endif
     }
 
@@ -115,3 +99,137 @@ public class GpsMessage
     public double sentAt;
     public double receivedAt;
 }
+```
+
+<p>Клас <code>GraphDrawer</code> відповідає за візуалізацію графіка в Unity. Він створює сітку з ліній у декартових координатах, відображаючи координати об'єктів, отриманих з GPS-даних. Основні функції класу:</p>
+<ul>
+    <li>Інстанціює префаби для ліній та тексту;</li>
+    <li>Використовує метод <code>DrawGraph</code> для побудови графіка;</li>
+    <li>Встановлює позиції ліній і відповідних текстів, відображаючи координати.</li>
+</ul>
+<p>Нижче наведено код класу:</p>
+
+```csharp
+using UnityEngine;
+using TMPro;
+
+public class GraphDrawer : MonoBehaviour
+{
+    public GameObject linePrefab; 
+    public GameObject textPrefab; 
+    public int numberOfLines = 10;
+    public float spacing = 2f;
+
+    void Start()
+    {
+        DrawGraph();
+    }
+
+    void DrawGraph()
+    {
+        for (int i = 0; i < numberOfLines; i++)
+        {
+            if (i == 0) { continue; }
+            Vector3 linePosition = new Vector3(i * spacing, 0, 0);
+            GameObject line = Instantiate(linePrefab, linePosition, Quaternion.Euler(90f, 0f, 0f));
+            line.transform.localScale = new Vector3(1f, 1f, 5f); 
+            GameObject text = Instantiate(textPrefab, linePosition + new Vector3(0, 0.5f, 0.5f), Quaternion.Euler(90f, 0f, 0f)); 
+            TextMeshPro textMeshPro = text.GetComponent<TextMeshPro>();
+            textMeshPro.text = linePosition.x.ToString("F0"); 
+            textMeshPro.alignment = TextAlignmentOptions.Center; 
+        }
+
+        for (int i = 0; i < numberOfLines; i++)
+        {
+            if (i == 0) { continue; }
+            Vector3 linePosition = new Vector3(0, 0, i * spacing);
+            GameObject line = Instantiate(linePrefab, linePosition, Quaternion.Euler(90f, 0f, 0f)); 
+            line.transform.localScale = new Vector3(1f, 1f, 5f); 
+            GameObject text = Instantiate(textPrefab, linePosition + new Vector3(-0.5f, 0f, 0f), Quaternion.Euler(90f, 0f, 0f));
+            TextMeshPro textMeshPro = text.GetComponent<TextMeshPro>();
+            textMeshPro.text = linePosition.z.ToString("F0"); 
+            textMeshPro.alignment = TextAlignmentOptions.Center;
+        }
+    }
+}
+```
+
+<p>Клас <code>MoveAndScale</code> відповідає за управління камерою в Unity. Він дозволяє користувачу переміщати камеру та змінювати її масштаб за допомогою клавіш та прокрутки миші. Основні функції класу:</p>
+<ul>
+    <li>Переміщення камери в горизонтальному та вертикальному напрямках;</li>
+    <li>Зміна розміру (масштабу) камери за допомогою прокрутки миші;</li>
+    <li>Обмеження масштабу в межах визначених значень.</li>
+</ul>
+<p>Нижче наведено код класу:</p>
+
+```csharp
+using UnityEngine;
+
+public class MoveAndScale : MonoBehaviour
+{
+    public float moveSpeed = 5f;
+    private float minSize = 1f;
+    private float maxSize = 50f;
+
+    private Camera camera;
+
+    void Start()
+    {
+        camera = GetComponent<Camera>(); // Получаем компонент камеры
+    }
+
+    void Update()
+    {
+        float moveX = Input.GetAxis("Horizontal") * moveSpeed * Time.deltaTime; 
+        float moveZ = Input.GetAxis("Vertical") * moveSpeed * Time.deltaTime;
+        transform.position += new Vector3(moveX, 0, moveZ);
+
+        float scroll = Input.GetAxis("Mouse ScrollWheel");
+        if (scroll != 0)
+        {
+            camera.orthographicSize = Mathf.Clamp(camera.orthographicSize - scroll * 5, minSize, maxSize);
+        }
+    }
+}
+```
+<p>Клас <code>MoveAndScale</code> відповідає за управління камерою в Unity. Він дозволяє користувачу переміщати камеру в просторі за допомогою клавіатури та змінювати масштаб за допомогою прокрутки миші. Основні функції цього класу:</p>
+<ul>
+    <li>Переміщення камери в горизонтальному та вертикальному напрямках через клавіші;</li>
+    <li>Зміна масштабу камери (зменшення або збільшення) за допомогою коліщатка миші;</li>
+    <li>Обмеження зміни масштабу в межах мінімальних і максимальних значень.</li>
+</ul>
+<p>Нижче наведено код класу:</p>
+
+```csharp
+using UnityEngine;
+
+public class MoveAndScale : MonoBehaviour
+{
+    public float moveSpeed = 5f;
+    private float minSize = 1f;
+    private float maxSize = 50f;
+
+    private Camera camera;
+
+    void Start()
+    {
+        camera = GetComponent<Camera>(); 
+    }
+
+    void Update()
+    {
+        // Переміщення камери
+        float moveX = Input.GetAxis("Horizontal") * moveSpeed * Time.deltaTime; 
+        float moveZ = Input.GetAxis("Vertical") * moveSpeed * Time.deltaTime;
+        transform.position += new Vector3(moveX, 0, moveZ);
+
+        // Зміна масштабу камери
+        float scroll = Input.GetAxis("Mouse ScrollWheel");
+        if (scroll != 0)
+        {
+            camera.orthographicSize = Mathf.Clamp(camera.orthographicSize - scroll * 5, minSize, maxSize);
+        }
+    }
+}
+```
+
