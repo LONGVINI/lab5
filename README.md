@@ -28,4 +28,90 @@
 <p>3. Отримання даних через WebSocket та використання бібліотеки для візуалізації координат об'єкта і супутників.</p>
 
 <h3>Результат</h3>
-<p>Додаток відображає положення об'єкта та супутників на декартовому графіку. Візуалізація показує об'єкт в режимі реального часу на основі даних з GPS-емуляції.</p>
+<h3>Розробка додатку</h3>
+
+<p>Для реалізації взаємодії з GPS-емулятором був розроблений WebSocket-клієнт на Unity. Цей код підключається до WebSocket-сервера, отримує дані про координати об'єкта в реальному часі та відправляє їх на обробку для подальшої візуалізації. Клієнт обробляє повідомлення, що приходять у форматі JSON, і передає їх для відображення супутникових координат у додатку.</p>
+
+<p>Клієнт включає наступні основні функції:</p>
+<ul>
+    <li>Підключення до WebSocket сервера через порт 4001;</li>
+    <li>Обробка підключення, помилок і закриття з'єднання;</li>
+    <li>Отримання повідомлень з даними GPS у форматі JSON;</li>
+    <li>Передача даних для подальшої обробки й візуалізації у додатку;</li>
+</ul>
+
+<p>Нижче наведений код для підключення та обробки даних:</p>
+
+```csharp
+using System;
+using System.Text;
+using System.Threading.Tasks;
+using UnityEngine;
+using NativeWebSocket;
+
+public class WebSocketClient : MonoBehaviour
+{
+    private WebSocket websocket;
+
+    async void Start()
+    {
+        // Подключаемся к WebSocket на порту 4001
+        websocket = new WebSocket("ws://localhost:4001");
+
+        websocket.OnOpen += () =>
+        {
+            Debug.Log("Соединение установлено!");
+        };
+
+        websocket.OnError += (e) =>
+        {
+            Debug.LogError("Ошибка: " + e);
+        };
+
+        websocket.OnClose += (e) =>
+        {
+            Debug.Log("Соединение закрыто!");
+        };
+
+        // Обработка полученных данных
+        websocket.OnMessage += (bytes) =>
+        {
+            var message = Encoding.UTF8.GetString(bytes);
+            ProcessGpsMessage(message);
+        };
+
+        // Подключаемся к серверу
+        await websocket.Connect();
+    }
+
+    void Update()
+    {
+#if !UNITY_WEBGL || UNITY_EDITOR
+        websocket?.DispatchMessageQueue();  // Обрабатываем очередь сообщений WebSocket (только для настольных платформ)
+#endif
+    }
+
+    async void OnApplicationQuit()
+    {
+        await websocket.Close();
+    }
+
+    private void ProcessGpsMessage(string message)
+    {
+        GpsMessage gpsMessage = JsonUtility.FromJson<GpsMessage>(message);
+        Debug.Log($"ID: {gpsMessage.id}, X: {gpsMessage.x}, Y: {gpsMessage.y}, SentAt: {gpsMessage.sentAt}, ReceivedAt: {gpsMessage.receivedAt}");
+
+        SatelliteManager.Instance.UpdateSatellitePosition(gpsMessage.id, gpsMessage.x, gpsMessage.y, gpsMessage.sentAt, gpsMessage.receivedAt);
+    }
+}
+
+
+[Serializable]
+public class GpsMessage
+{
+    public string id;
+    public float x;
+    public float y;
+    public double sentAt;
+    public double receivedAt;
+}
