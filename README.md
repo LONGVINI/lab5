@@ -501,4 +501,28 @@ public class GPSConfigData
 }
 ```
 
+<p>У проекті присутні наступні елементи:</p>
 
+<ul>
+    <li>
+        <strong>WebSocketClient</strong>: цей елемент містить скрипт <code>WebSocketClient</code>, який відповідає за з’єднання з WebSocket сервером.
+    </li>
+    <li>
+        <strong>SatelliteManager</strong>: цей елемент має скрипт <code>SatelliteManager</code>, який управляє супутниками, їхньою позицією та станом.
+    </li>
+    <li>
+        <strong>ApiChangeConfig</strong>: тут знаходиться скрипт <code>ChangeConfig</code>, який відповідає за зміну конфігурації та взаємодію з API.
+    </li>
+</ul>
+
+<p>Є також компонент <strong>Canvas</strong>, всередині якого знаходиться <strong>Panel</strong>. У цій панелі є ще дві підпанелі, які містять поля для вводу даних, текстові підписи та кнопку для зміни значень на сервері через API.</p>
+
+<p align="center">
+  <img src="Screenshots/1.jpg" alt=""/>
+</p>
+
+<p>Крім того, є префаб супутника, виконаний у вигляді кружечка, та візуалізація об'єкта у вигляді трикутника.</p>
+
+<p align="center">
+  <img src="Screenshots/2.jpg" alt=""/>
+</p>
