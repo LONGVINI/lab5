@@ -410,8 +410,8 @@ public class SatelliteManager : MonoBehaviour
             return;
         }
 
-        double targetX = (C - E * (C / B)) / (A - E * (D / B));
-        double targetZ = (C - A * targetX) / B;
+        double targetX = (C * E - F * B) / (E * A - B * D);
+        double targetZ = (C * D - A * F) / (B * D - A * E); 
 
         if (double.IsNaN(targetX) || double.IsNaN(targetZ))
         {
